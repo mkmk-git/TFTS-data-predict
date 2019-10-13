@@ -8,29 +8,29 @@ matplotlib.use('agg')
 import matplotlib.pyplot as plt
 import tensorflow as tf
 import pandas as pd
-#np.set_printoptions(threshold=np.inf)
+#np.set_printoptions(threshold=np.inf) #预调库
 
 def main(_):
     csv_file_name = './data/period_trend.csv'
     reader = tf.contrib.timeseries.CSVReader(csv_file_name)
-    train_input_fn = tf.contrib.timeseries.RandomWindowInputFn(reader, batch_size=64, window_size=80)
+    train_input_fn = tf.contrib.timeseries.RandomWindowInputFn(reader, batch_size=64, window_size=80) #input data window setting
     with tf.Session() as sess:
         data = reader.read_full()
         coord = tf.train.Coordinator()
         tf.train.start_queue_runners(sess=sess, coord=coord)
         data = sess.run(data)
-        coord.request_stop()
+        coord.request_stop()  #training
 
     ar = tf.contrib.timeseries.ARRegressor(
         periodicities=1800, input_window_size=50, output_window_size=30,
         num_features=1,
-        loss=tf.contrib.timeseries.ARModel.NORMAL_LIKELIHOOD_LOSS)
+        loss=tf.contrib.timeseries.ARModel.NORMAL_LIKELIHOOD_LOSS)  #AR style
 
     ar.train(input_fn=train_input_fn, steps=100)
 
     evaluation_input_fn = tf.contrib.timeseries.WholeDatasetInputFn(reader)
     # keys of evaluation: ['covariance', 'loss', 'mean', 'observed', 'start_tuple', 'times', 'global_step']
-    evaluation = ar.evaluate(input_fn=evaluation_input_fn, steps=1)
+    evaluation = ar.evaluate(input_fn=evaluation_input_fn, steps=1)  #evaluation data
 
     (predictions,) = tuple(ar.predict(
         input_fn=tf.contrib.timeseries.predict_continuation_input_fn(
@@ -44,7 +44,7 @@ def main(_):
     plt.plot(predictions['times'].reshape(-1), predictions['mean'].reshape(-1))
     plt.xlabel('time_step')
     plt.ylabel('values')
-    plt.savefig('predict_result.png')			
+    plt.savefig('predict_result.png')			#drawing pltmab
 			
 
     print((predictions,))			
